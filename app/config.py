@@ -4,11 +4,17 @@ BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 
 def _normalise_database_url(url: str) -> str:
-    """Certains fournisseurs (Render, Heroku...) donnent une URL qui
-    commence par 'postgres://', alors que SQLAlchemy 2.x exige le
-    préfixe 'postgresql://'. On corrige automatiquement si besoin."""
-    if url and url.startswith("postgres://"):
-        return url.replace("postgres://", "postgresql://", 1)
+    """Adapte l'URL fournie par l'hébergeur (Render, Neon...) au pilote
+    PostgreSQL utilisé par le projet (psycopg 3) :
+    - 'postgres://...'   -> 'postgresql+psycopg://...'
+    - 'postgresql://...' -> 'postgresql+psycopg://...'
+    """
+    if not url:
+        return url
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    if url.startswith("postgresql://") and "+psycopg" not in url:
+        url = url.replace("postgresql://", "postgresql+psycopg://", 1)
     return url
 
 
